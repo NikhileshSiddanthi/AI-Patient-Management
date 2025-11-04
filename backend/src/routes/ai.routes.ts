@@ -6,10 +6,17 @@ const router = Router();
 // All routes require authentication
 router.use(authenticate);
 
+import { analyzeSymptoms } from '../services/ai.service';
+
 // AI-powered Symptom Checker
 router.post('/symptom-checker', async (req, res, next) => {
-  // Implementation in production
-  res.json({ success: true, message: 'Symptom checker endpoint' });
+  try {
+    const { symptoms, medicalHistory, testResults } = req.body;
+    const analysis = await analyzeSymptoms(symptoms, medicalHistory, testResults);
+    res.json(analysis);
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Appointment Optimization

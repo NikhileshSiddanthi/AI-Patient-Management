@@ -1,237 +1,68 @@
-import { SymptomCheckerRequest, SymptomCheckerResponse, PredictiveAnalyticsRequest } from '../types';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
 
-/**
- * AI Services for Patient Management System
- * These are simulated AI services - in production, integrate with actual AI/ML models
- */
+dotenv.config();
 
-class AIService {
-  /**
-   * Symptom Checker - AI-powered initial triage system
-   */
-  public async checkSymptoms(request: SymptomCheckerRequest): Promise<SymptomCheckerResponse> {
-    const { symptoms, additionalInfo } = request;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-    // Simulated AI analysis
-    // In production, this would call an actual ML model or medical knowledge base
-    const conditions = this.analyzeSymptoms(symptoms);
-    const urgency = this.determineUrgency(symptoms);
-
+export const analyzeSymptoms = async (symptoms: string, medicalHistory: string, testResults: string) => {
+  if (!process.env.OPENAI_API_KEY) {
+    // Return a mock response if the API key is not configured
     return {
-      possibleConditions: conditions,
-      urgencyLevel: urgency.level,
-      shouldSeekImmediateCare: urgency.immediate,
+      analysis: 'This is a demo response for AI analysis. Please configure your OpenAI API key.',
       confidence: 0.85,
-    };
-  }
-
-  /**
-   * Appointment Optimization - AI-driven scheduling
-   */
-  public async optimizeAppointment(patientId: string, preferredDates: Date[], appointmentType: string): Promise<any> {
-    // AI-powered scheduling optimization
-    // Factors: doctor availability, patient history, appointment type, urgency
-    
-    return {
-      recommendedSlots: [
-        {
-          date: preferredDates[0],
-          time: '10:00 AM',
-          doctorId: 'doc-123',
-          doctorName: 'Dr. Smith',
-          confidence: 0.92,
-          reason: 'Best match for condition, high availability',
-        },
-      ],
-      optimizationScore: 0.88,
-    };
-  }
-
-  /**
-   * Predictive Analytics - Risk assessment and outcome prediction
-   */
-  public async analyzePredictiveRisks(request: PredictiveAnalyticsRequest): Promise<any> {
-    const { patientId, analysisType } = request;
-
-    // Simulated predictive analytics
-    return {
-      riskScore: 0.35, // 0-1 scale
-      riskLevel: 'moderate',
-      predictions: {
-        readmissionRisk: 0.28,
-        complicationRisk: 0.42,
-        adherenceScore: 0.75,
-      },
       recommendations: [
-        'Schedule follow-up appointment within 2 weeks',
-        'Monitor blood pressure daily',
-        'Consider medication adjustment',
+        'Consult with a healthcare professional',
+        'Monitor symptoms closely',
+        'Keep detailed records of any changes'
       ],
-      confidenceLevel: 0.82,
-      modelVersion: 'v2.1.0',
+      disclaimer: 'This is a demo response. Configure OpenAI API key for real AI analysis.',
     };
   }
 
-  /**
-   * Natural Language Processing for Medical Documentation
-   */
-  public async processNaturalLanguage(text: string): Promise<any> {
-    // AI-powered NLP for medical text
-    return {
-      entities: [
-        { type: 'symptom', value: 'headache', confidence: 0.95 },
-        { type: 'medication', value: 'aspirin', confidence: 0.88 },
-      ],
-      sentiment: 'neutral',
-      summary: 'Patient reports persistent headache, currently taking aspirin',
-      extractedData: {
-        symptoms: ['headache'],
-        medications: ['aspirin'],
-        duration: '3 days',
-      },
-    };
-  }
+  const prompt = `
+    Analyze the following medical information:
+    Symptoms: ${symptoms}
+    Medical History: ${medicalHistory}
+    Test Results: ${testResults}
 
-  /**
-   * Treatment Recommendations - Evidence-based AI suggestions
-   */
-  public async recommendTreatment(
-    diagnosis: string,
-    symptoms: string[],
-    medicalHistory: string[]
-  ): Promise<any> {
-    return {
-      primaryTreatments: [
+    Provide a professional medical analysis and recommendations.
+    Always include disclaimers about consulting healthcare professionals.
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
         {
-          treatment: 'Lifestyle modifications',
-          confidence: 0.92,
-          evidenceLevel: 'high',
-          details: 'Diet and exercise program',
+          role: "system",
+          content: "You are a medical AI assistant. Provide helpful analysis while emphasizing the need for professional medical consultation."
         },
+        {
+          role: "user",
+          content: prompt
+        }
       ],
-      alternativeTreatments: [],
-      contraindications: [],
-      followUpRequired: true,
-      recommendedSpecialist: null,
-    };
-  }
+      max_tokens: 500,
+      temperature: 0.7,
+    });
 
-  /**
-   * Intelligent Search - Semantic search across medical records
-   */
-  public async semanticSearch(query: string, patientId?: string): Promise<any> {
-    return {
-      results: [],
-      totalResults: 0,
-      searchTime: 0.15,
-    };
-  }
-
-  /**
-   * Automated Documentation - AI-generated reports and summaries
-   */
-  public async generateDocumentation(data: any): Promise<string> {
-    // AI-generated medical documentation
-    return 'AI-generated medical report summary...';
-  }
-
-  /**
-   * Patient Monitoring Alerts - AI-powered critical change notifications
-   */
-  public async monitorPatientVitals(patientId: string, vitals: any): Promise<any> {
-    // AI monitoring for critical changes
-    const alerts: any[] = [];
-
-    // Check vital signs against normal ranges
-    if (vitals.bloodPressureSystolic > 140) {
-      alerts.push({
-        type: 'warning',
-        severity: 'high',
-        message: 'Elevated blood pressure detected',
-        recommendation: 'Contact healthcare provider',
-      });
-    }
+    const analysis = completion.choices[0].message.content;
 
     return {
-      alerts,
-      overallStatus: alerts.length > 0 ? 'needs_attention' : 'normal',
-      riskScore: 0.45,
+      analysis,
+      confidence: 0.85, // This is a placeholder value
+      recommendations: [ // This is a placeholder value
+        'Consult with a healthcare professional',
+        'Monitor symptoms closely',
+        'Keep detailed records of changes'
+      ],
+      disclaimer: 'This AI analysis is for informational purposes only and should not replace professional medical advice.'
     };
+  } catch (error) {
+    console.error('AI Analysis Error:', error);
+    throw new Error('Failed to analyze symptoms with AI');
   }
-
-  // Private helper methods
-  private analyzeSymptoms(symptoms: string[]): any[] {
-    // Simulated symptom analysis
-    // In production, use medical knowledge base and ML models
-    
-    const conditionsMap: { [key: string]: string[] } = {
-      'Common Cold': ['cough', 'runny nose', 'sore throat', 'fatigue'],
-      'Influenza': ['fever', 'body aches', 'fatigue', 'headache'],
-      'Migraine': ['severe headache', 'nausea', 'sensitivity to light'],
-      'Allergies': ['sneezing', 'itchy eyes', 'runny nose'],
-    };
-
-    const matches: any[] = [];
-
-    for (const [condition, conditionSymptoms] of Object.entries(conditionsMap)) {
-      const matchCount = symptoms.filter(s => 
-        conditionSymptoms.some(cs => cs.toLowerCase().includes(s.toLowerCase()))
-      ).length;
-
-      if (matchCount > 0) {
-        matches.push({
-          condition,
-          probability: matchCount / conditionSymptoms.length,
-          severity: this.determineSeverity(condition),
-          recommendations: this.getRecommendations(condition),
-        });
-      }
-    }
-
-    return matches.sort((a, b) => b.probability - a.probability).slice(0, 5);
-  }
-
-  private determineUrgency(symptoms: string[]): { level: string; immediate: boolean } {
-    const urgentSymptoms = [
-      'chest pain',
-      'difficulty breathing',
-      'severe bleeding',
-      'unconscious',
-      'severe pain',
-    ];
-
-    const hasUrgent = symptoms.some(s =>
-      urgentSymptoms.some(us => s.toLowerCase().includes(us.toLowerCase()))
-    );
-
-    if (hasUrgent) {
-      return { level: 'urgent', immediate: true };
-    }
-
-    return { level: 'routine', immediate: false };
-  }
-
-  private determineSeverity(condition: string): string {
-    const severityMap: { [key: string]: string } = {
-      'Common Cold': 'mild',
-      'Influenza': 'moderate',
-      'Migraine': 'moderate',
-      'Allergies': 'mild',
-    };
-
-    return severityMap[condition] || 'moderate';
-  }
-
-  private getRecommendations(condition: string): string[] {
-    const recommendationsMap: { [key: string]: string[] } = {
-      'Common Cold': ['Rest', 'Stay hydrated', 'Over-the-counter cold medicine'],
-      'Influenza': ['Bed rest', 'Antiviral medication', 'Monitor symptoms'],
-      'Migraine': ['Rest in dark room', 'Pain medication', 'Stay hydrated'],
-      'Allergies': ['Avoid allergens', 'Antihistamines', 'Consult allergist'],
-    };
-
-    return recommendationsMap[condition] || ['Consult healthcare provider'];
-  }
-}
-
-export default new AIService();
+};

@@ -22,6 +22,7 @@ import notificationRoutes from './routes/notification.routes';
 import adminRoutes from './routes/admin.routes';
 import vitalSignsRoutes from './routes/vitalSigns.routes';
 import medicationRoutes from './routes/medication.routes';
+import analyticsRoutes from './routes/analytics.routes';
 
 class Server {
   public app: Application;
@@ -86,6 +87,7 @@ class Server {
     this.app.use(`${API_PREFIX}/admin`, adminRoutes);
     this.app.use(`${API_PREFIX}/vital-signs`, vitalSignsRoutes);
     this.app.use(`${API_PREFIX}`, medicationRoutes);
+    this.app.use(`${API_PREFIX}/analytics`, analyticsRoutes);
 
     // API info endpoint
     this.app.get(API_PREFIX, (req: Request, res: Response) => {
